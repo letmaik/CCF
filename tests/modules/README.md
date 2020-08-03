@@ -56,7 +56,7 @@ let exports = {}, module = {exports};
 // REPLACE this comment with the content of
 // https://raw.githubusercontent.com/lodash/lodash/4.17.15-npm/core.js
 
-export default exports._;
+export default module.exports;
 ```
 
 You are now able to import Lodash from another module:
@@ -70,7 +70,7 @@ export function partition(arr) {
 
 ### Library bundle with global exports
 
-We assume that the bundle defines variables in the outer/global scope.
+We assume that the bundle defines variables in the global scope.
 
 An example is the browser bundle of the [jsrsasign](https://github.com/kjur/jsrsasign) library.
 
@@ -123,8 +123,6 @@ Some libraries like [Lodash](https://lodash.com/) are already available as colle
 These can be stored in CCF as individual modules under a prefix, e.g. `lodash/`.
 Once stored, they can be imported like `import {partition} from 'lodash/partition.js`.
 Different to Node.js the full path is required to import the main module: `import _ from 'lodash/lodash.js`.
-
-TODO needs support for relative paths in module loader (modules will often import other modules)
 
 ### Module libraries with dependencies
 
