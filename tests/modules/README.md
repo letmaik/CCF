@@ -145,3 +145,33 @@ These are resolved using an Import Map which can resolve them to URLs or relativ
 
 If and when Import Maps are more widely supported and developer tooling becomes available
 it may make sense to support them in CCF as well to more easily consume module libraries.
+
+## CCF apps
+
+### NPM
+
+- All used npm dependencies must be of JS module type
+- Legacy libraries must be manually wrapped as explained above
+
+A CCF app is a combination of:
+- App metadata including endpoint description (JSON)
+- Endpoint module with one exported function per endpoint
+- Supporting modules, either external dependencies or app logic
+
+Preparing an app for deployment requires a build step that transforms bare imports
+into relative imports. For this, we can use rollup, which also provides tree shaking
+to avoid deploying unused modules. See `package.json` and `rollup.config.js` for details.
+
+An app is deployed to CCF in multiple tables:
+- `ccf.modules`: App JS modules stored under a prefix, e.g. `/app1/`.
+- `ccf.endpoints` (?): Endpoint metadata.
+
+#### Legacy non-module packages
+
+While most modern packages have transitioned to JS modules, there are still packages that
+are published as traditional CommonJS/Node.js-export packages.
+The easiest way to consume such packages is to find a bundled variant of them
+and wrap them in a module as described earlier.
+
+Supporting traditional packages directly by emulating `require()` in CCF is a complex task
+and not planned.
