@@ -162,9 +162,15 @@ Preparing an app for deployment requires a build step that transforms bare impor
 into relative imports. For this, we can use rollup, which also provides tree shaking
 to avoid deploying unused modules. See `package.json` and `rollup.config.js` for details.
 
+After running `npm run build`, the `dist/` folder contains:
+- `node_modules/lodash-es/*.js`
+- `src/endpoints.js`
+
 An app is deployed to CCF in multiple tables:
 - `ccf.modules`: App JS modules stored under a prefix, e.g. `/app1/`.
 - `ccf.endpoints` (?): Endpoint metadata.
+
+The CCF Python client takes care of all of that...
 
 #### Legacy non-module packages
 
