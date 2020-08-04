@@ -75,11 +75,12 @@ After running `npm run build`, the `dist/` folder contains:
 The Python client of CCF can now be used to deploy the application.
 
 TODO extend Python client
-TODO decide on how to handle app namespaces during deployment
-     it should be easy to clone a generic app from somewhere and deploy it under a given
-     REST API and module path prefix (potentially, these two are separate)
-     this should probably be stored in some deployment config file, like in k8s
-     no CLI args, if possible
+
+TODO Decide on how to handle app namespaces during deployment.
+     It should be easy to clone a generic app from somewhere and deploy it under a given
+     REST API and module path prefix (potentially, these two are separate).
+     This should probably be stored in some deployment config file, like in k8s.
+     No CLI args, if possible.
 
 ### Using npm packages
 
