@@ -1,7 +1,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache 2.0 License.
+import os
+import glob
 import tempfile
 import http
+import subprocess
 import infra.network
 import infra.path
 import infra.proc
@@ -12,6 +15,8 @@ import suite.test_requirements as reqs
 import ccf.proposal_generator
 
 from loguru import logger as LOG
+
+THIS_DIR = os.path.dirname(__file__)
 
 MODULE_RETURN = "Hello world!"
 MODULE_CONTENT = f"""
