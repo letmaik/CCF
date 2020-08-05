@@ -1,6 +1,6 @@
 import {partition} from 'lodash-es'
-import * as pbjs from 'protobufjs'
 import * as rs  from 'jsrsasign';
+import * as pbjs from './protobuf.js'
 
 console.log(partition)
 console.log(pbjs)

@@ -81,3 +81,35 @@ TODO Decide on how to handle app namespaces during deployment.
      REST API and module path prefix (potentially, these two are separate).
      This should probably be stored in some deployment config file, like in k8s.
      No CLI args, if possible.
+
+### A note on CommonJS modules
+
+The sample project uses the [@rollup/plugin-commonjs](https://github.com/rollup/plugins/tree/master/packages/commonjs) package to automatically convert CommonJS modules to native JavaScript modules
+so that they can be used in CCF.
+
+Sometimes this conversion can fail, for example when the package has circular module dependencies.
+If that is the case, try one of the following suggestions:
+
+1. Check if there is a JavaScript module variant of the package and use that instead.
+   These are also named ES or ECMAScript modules/packages.
+
+2. Check if there is a known work-around to fix the conversion issue.
+   Chances are you are not the only one experiencing it.
+
+3. Manually wrap a browser bundle of the package without using npm.
+
+An example where step 3 is currently necessary is [protobuf.js](https://github.com/protobufjs/protobuf.js/issues/1402). To wrap the bundle as a module, save the following code as `protobuf.js` in your project:
+
+```js
+let exports = {}, module = {exports};
+
+// REPLACE this comment with the content of
+// https://raw.githubusercontent.com/protobufjs/protobuf.js/v6.10.1/dist/protobuf.min.js
+
+export default module.exports;
+```
+
+You are now able to import protobuf.js:
+```js
+import pb from './protobuf.js';
+```
