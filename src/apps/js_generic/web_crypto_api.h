@@ -62,20 +62,15 @@ namespace ccfapp
       if (!format.has_value())
         return js_dump_error(ctx);
 
-      Buffer key_data = js_get_array_buffer(ctx, argv[1]);
+      Buffer key_data = js_get_array_buffer(ctx, argv[1], "keyData");
 
       // TODO parse algorithm arg
 
-      int extractable = JS_ToBool(ctx, argv[3]);
+      int extractable = js_get_bool(ctx, argv[3], "extractable");
       if (extractable == -1)
         return js_dump_error(ctx);
 
-      if (JS_IsArray(ctx, argv[4]) <= 0)
-      {
-        JS_ThrowTypeError(ctx, "keyUsages must be an array");
-        return js_dump_error(ctx);
-      }
-      auto key_usages = js_get_string_array(ctx, argv[4]);
+      auto key_usages = js_get_string_array(ctx, argv[4], "keyUsages");
       if (!key_usages.has_value())
         return js_dump_error(ctx);
 

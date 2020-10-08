@@ -73,8 +73,32 @@ namespace ccfapp
     return JS_EXCEPTION;
   }
 
+  std::optional<std::vector<std::string>> js_get_string_array(JSContext* ctx, JSValue obj, const std::string& arg_name_for_error = "")
+  {
+    if (!JS_IsArray(ctx, obj))
+    {
+      if (!arg_name_for_error.empty())
+        JS_ThrowTypeError(ctx, "%s must be an array", arg_name_for_error);
+      return std::nullopt;
+    }
+    int64_t length = js_get_int_property(ctx, obj, "length");
+    if (length == -1)
+      return std::nullopt;
+    std::vector<std::string> items;
+    for (uint32_t i=0; i < length; i++)
+    {
+      JSValue item = JS_GetPropertyUint32(ctx, obj, i);
+      auto str = js_get_string(ctx, item);
+      JS_FreeValue(ctx, item);
+      if (!str.has_value())
+        return std::nullopt;
+      items.emplace_back(std::move(str.value()));
+    }
+    return items;
+  }
+
   // Access the raw buffer of an ArrayBuffer or TypedArray.
-  Buffer js_get_array_buffer(JSContext* ctx, JSValueConst arg)
+  Buffer js_get_array_buffer(JSContext* ctx, JSValueConst arg, const std::string& arg_name_for_error = "")
   {
     size_t buf_size;
     size_t buf_offset;
@@ -96,7 +120,10 @@ namespace ccfapp
       array_buffer = JS_GetArrayBuffer(ctx, &buf_size, arg);
 
     if (!array_buffer)
+    {
+      JS_ThrowTypeError(ctx, "%s must be an ArrayBuffer or TypedArray", arg_name_for_error);
       return Buffer();
+    }
 
     return Buffer(array_buffer, buf_size);
   }
@@ -116,6 +143,15 @@ namespace ccfapp
     std::string str(cstr);
     JS_FreeCString(ctx, cstr);
     return str;
+  }
+
+  int js_get_bool(
+    JSContext* ctx, JSValue arg, const std::string& arg_name_for_error = "")
+  {
+    int b = JS_ToBool(ctx, arg);
+    if (b == -1 && !arg_name_for_error.empty())
+      JS_ThrowTypeError(ctx, "%s must be convertible to a boolean", arg_name_for_error);
+    return b;
   }
 
   std::optional<std::string> js_get_string_property(
@@ -153,24 +189,6 @@ namespace ccfapp
     JS_FreeValue(ctx, buf_val);
     return buf;
   }
-
-  std::optional<std::vector<std::string>> js_get_string_array(JSContext* ctx, JSValue obj)
-  {
-    int64_t length = js_get_int_property(ctx, obj, "length");
-    if (length == -1)
-      return std::nullopt;
-    std::vector<std::string> items;
-    for (uint32_t i=0; i < length; i++)
-    {
-      JSValue item = JS_GetPropertyUint32(ctx, obj, i);
-      auto str = js_get_string(ctx, item);
-      if (!str.has_value())
-        return std::nullopt;
-      items.emplace_back(std::move(str.value()));
-    }
-    return items;
-  }
-
 
 #pragma clang diagnostic pop
 }
