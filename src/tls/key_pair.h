@@ -814,6 +814,40 @@ namespace tls
     return key;
   }
 
+  inline std::unique_ptr<mbedtls_pk_context> parse_private_key(
+    const CBuffer& pkey, CBuffer pw = nullb)
+  {
+    std::unique_ptr<mbedtls_pk_context> key =
+      std::make_unique<mbedtls_pk_context>();
+    mbedtls_pk_init(key.get());
+
+    int rc =
+      mbedtls_pk_parse_key(key.get(), pkey.p, pkey.n, pw.p, pw.n);
+    if (rc != 0)
+    {
+      throw std::logic_error("Could not parse key: " + error_string(rc));
+    }
+
+    return key;
+  }
+
+  inline std::unique_ptr<mbedtls_pk_context> parse_public_key(
+    const CBuffer& pkey)
+  {
+    std::unique_ptr<mbedtls_pk_context> key =
+      std::make_unique<mbedtls_pk_context>();
+    mbedtls_pk_init(key.get());
+
+    int rc =
+      mbedtls_pk_parse_public_key(key.get(), pkey.p, pkey.n);
+    if (rc != 0)
+    {
+      throw std::logic_error("Could not parse public key: " + error_string(rc));
+    }
+
+    return key;
+  }
+
   /**
    * Create a new public / private key pair on specified curve and
    * implementation
