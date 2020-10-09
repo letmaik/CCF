@@ -329,6 +329,8 @@ namespace ccfapp
       Buffer wrapping_key_data =
         js_get_array_buffer_property(ctx, wrapping_key, "_keyData");
 
+      std::vector<uint8_t> wrapped_key;
+
       if (wrap_algo_name == "RSA-OAEP")
       {
         // https://tools.ietf.org/html/rfc3447#section-7.1
@@ -336,6 +338,35 @@ namespace ccfapp
         Buffer label = js_get_array_buffer_property(ctx, wrap_algo, "label");
 
         // TODO wrap key with mbedtls
+
+        // TODO catch exception
+        // TODO is the wrapping key always a public key?
+        auto pk = parse_public_key(wrapping_key_data);
+        if (mbedtls_pk_get_type(pk.get()) != MBEDTLS_PK_RSA)
+        {
+          JS_ThrowTypeError(ctx, "wrappingkey must be an RSA key");
+          return js_dump_error(ctx);
+        }
+
+        mbedtls_rsa_context* rsa = mbedtls_pk_rsa(*pk);
+
+        // TODO why should this be the size of the wrapping key?
+        wrapped_key.resize(rsa->len);
+
+        if (mbedtls_rsa_rsaes_oaep_encrypt(rsa,
+          ???,
+          nullptr,
+          MBEDTLS_RSA_PUBLIC,
+          label.p,
+          label.n,
+          key_data.n,
+          key_data.p,
+          wrapped_key.data()
+        ) != 0) 
+        {
+          JS_ThrowInternalError(ctx, "mbedtls_rsa_rsaes_oaep_encrypt failed");
+          return js_dump_error(ctx);
+        }
 
       }
       else
@@ -347,7 +378,7 @@ namespace ccfapp
         return js_dump_error(ctx);
       }
 
-      auto wrapped_key_buffer = JS_NewArrayBufferCopy(ctx, wrapped_key_buf, wrapped_key_len);
+      auto wrapped_key_buffer = JS_NewArrayBufferCopy(ctx, wrapped_key.data(), wrapped_key.size());
 
       return wrapped_key_buffer;
     }
