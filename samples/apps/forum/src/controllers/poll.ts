@@ -21,7 +21,7 @@ import * as math from 'mathjs'
 
 import {
     ErrorResponse, ValidateErrorResponse, ValidateErrorStatus,
-    BadRequestError, ForbiddenError, NotFoundError
+    BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError
 } from "../error_handler"
 import { User } from "../authentication"
 import * as ccf from "../types/ccf"
@@ -106,6 +106,7 @@ namespace kv {
 
 @Route("polls")
 @Security("jwt")
+@Response<ErrorResponse>(UnauthorizedError.Status, "Unauthorized")
 export class PollController extends Controller {
 
     private kvPolls = new ccf.TypedKVMap(ccf.kv.polls, ccf.string, ccf.json<kv.Poll>())
