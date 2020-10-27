@@ -177,36 +177,32 @@ import { {{name}} } from '{{modulePath}}';
 {{#each actions}}
 // {{method}} {{fullPath}}
 export function {{name}}(request) {
-    const response = {
-        body: undefined,
-        statusCode: undefined,
-        headers: {}
-    }
-
-    {{#if security.length}}
     try {
+        {{#if security.length}}
         authenticateMiddleware({{json security}}, request)
-    } catch (err) {
-        return errorHandler(err, request);
-    }
-    {{/if}}
+        {{/if}}
 
-    const args = {
-        {{#each parameters}}
-            {{@key}}: {{{json this}}},
-        {{/each}}
-    };
+        const args = {
+            {{#each parameters}}
+                {{@key}}: {{{json this}}},
+            {{/each}}
+        };
 
-    const request_ = {
-        body: request.body,
-        headers: request.headers,
-        query: parseQuery(request.query),
-        params: request.params,
-        user: request.user
-    }
+        const request_ = {
+            body: request.body,
+            headers: request.headers,
+            query: parseQuery(request.query),
+            params: request.params,
+            user: request.user
+        }
 
-    try {
-        let validatedArgs = getValidatedArgs(args, request_, response);
+        const response = {
+            body: undefined,
+            statusCode: undefined,
+            headers: {}
+        }
+
+        const validatedArgs = getValidatedArgs(args, request_, response);
 
         const controller = new {{../name}}();
 
