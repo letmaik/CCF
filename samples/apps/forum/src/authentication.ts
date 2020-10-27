@@ -6,7 +6,7 @@ import * as ccf from './types/ccf'
 import { UnauthorizedError } from './error_handler'
 
 export interface User {
-    claims: any
+    claims: { [name: string]: any }
     userId: string
 }
 
