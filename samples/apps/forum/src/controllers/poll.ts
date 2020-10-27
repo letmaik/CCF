@@ -20,7 +20,7 @@ import * as _ from 'lodash-es'
 import * as math from 'mathjs'
 
 import {
-    ErrorResponse, ValidateErrorResponse, ValidateErrorStatus,
+    ErrorResponse, ValidateErrorResponse, ValidateError,
     BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError
 } from "../error_handler"
 import { User } from "../authentication"
@@ -107,6 +107,7 @@ namespace kv {
 @Route("polls")
 @Security("jwt")
 @Response<ErrorResponse>(UnauthorizedError.Status, "Unauthorized")
+@Response<ValidateErrorResponse>(ValidateError.Status, "Schema validation error")
 export class PollController extends Controller {
 
     private kvPolls = new ccf.TypedKVMap(ccf.kv.polls, ccf.string, ccf.json<kv.Poll>())
@@ -115,7 +116,6 @@ export class PollController extends Controller {
 
     @SuccessResponse(201, "Poll has been successfully created")
     @Response<ErrorResponse>(ForbiddenError.Status, "Poll has not been created because a poll with the same topic exists already")
-    @Response<ValidateErrorResponse>(ValidateErrorStatus, "Schema validation error")
     @Post('{topic}')
     public createPoll(
         @Path() topic: string,
@@ -140,7 +140,6 @@ export class PollController extends Controller {
 
     @SuccessResponse(201, "Polls have been successfully created")
     @Response<ErrorResponse>(ForbiddenError.Status, "Polls were not created because a poll with the same topic exists already")
-    @Response<ValidateErrorResponse>(ValidateErrorStatus, "Schema validation error")
     @Post()
     public createPolls(
         @Body() body: CreatePollsRequest,
@@ -167,7 +166,6 @@ export class PollController extends Controller {
     @SuccessResponse(204, "Opinion has been successfully recorded")
     @Response<ErrorResponse>(BadRequestError.Status, "Opinion was not recorded because the opinion data type does not match the poll type")
     @Response<ErrorResponse>(NotFoundError.Status, "Opinion was not recorded because no poll with the given topic exists")
-    @Response<ValidateErrorResponse>(ValidateErrorStatus, "Schema validation error")
     @Put('{topic}')
     public submitOpinion(
         @Path() topic: string,
@@ -190,7 +188,6 @@ export class PollController extends Controller {
 
     @SuccessResponse(204, "Opinions have been successfully recorded")
     @Response<ErrorResponse>(BadRequestError.Status, "Opinions were not recorded because either an opinion data type did not match the poll type or a poll with the given topic was not found")
-    @Response<ValidateErrorResponse>(ValidateErrorStatus, "Schema validation error")
     @Put()
     public submitOpinions(
         @Body() body: SubmitOpinionsRequest,
@@ -215,7 +212,6 @@ export class PollController extends Controller {
 
     @SuccessResponse(200, "Poll data")
     @Response<ErrorResponse>(NotFoundError.Status, "Poll data could not be returned because no poll with the given topic exists")
-    @Response<ValidateErrorResponse>(ValidateErrorStatus, "Schema validation error")
     @Get('{topic}')
     public getPoll(
         @Path() topic: string,
@@ -232,7 +228,6 @@ export class PollController extends Controller {
     }
     
     @SuccessResponse(200, "Poll data")
-    @Response<ValidateErrorResponse>(ValidateErrorStatus, "Schema validation error")
     @Get()
     public getPolls(
         @Request() request: ccf.Request

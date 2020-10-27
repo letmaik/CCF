@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the Apache 2.0 License.
 
-import { ValidateError, FieldErrors } from "@tsoa/runtime";
+import { ValidateError as TsoaValidateError, FieldErrors } from "@tsoa/runtime";
 import * as ccf from './types/ccf'
 
 export interface ErrorResponse {
@@ -13,7 +13,9 @@ export interface ValidateErrorResponse extends ErrorResponse {
     details: FieldErrors
 }
 
-export const ValidateErrorStatus = 422
+export abstract class ValidateError {
+    static Status = 422
+}
 
 class HttpError extends Error {
     constructor(public statusCode: number, message: string) {
@@ -64,13 +66,13 @@ export class NotFoundError extends HttpError {
  * The code that imports and calls this handler is in tsoa-support/routes.ts.tmpl.
  */
 export function errorHandler(err: unknown, req: ccf.Request): ccf.Response<ErrorResponse | ValidateErrorResponse> {
-    if (err instanceof ValidateError) {
+    if (err instanceof TsoaValidateError) {
         return {
             body: {
                 message: "Validation failed",
                 details: err.fields
             },
-            statusCode: ValidateErrorStatus
+            statusCode: ValidateError.Status
         }
     } else if (err instanceof HttpError) {
         return {
