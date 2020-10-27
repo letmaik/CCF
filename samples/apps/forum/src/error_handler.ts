@@ -4,13 +4,6 @@
 import { ValidateError, FieldErrors } from "@tsoa/runtime";
 import * as ccf from './types/ccf'
 
-// The global error handler. Gets called for:
-// - Request schema validation errors
-// - Uncaught exceptions in controller actions
-
-// See https://tsoa-community.github.io/docs/error-handling.html#setting-up-error-handling
-// The code that imports and calls this handler is in tsoa-support/routes.ts.tmpl.
-
 export interface ErrorResponse {
     message: string
 }
@@ -36,6 +29,14 @@ export class BadRequestError extends HttpError {
     }
 }
 
+export class UnauthorizedError extends HttpError {
+    static Status = 401
+
+    constructor(message: string) {
+        super(UnauthorizedError.Status, message)
+    }
+}
+
 export class ForbiddenError extends HttpError {
     static Status = 403
 
@@ -52,6 +53,16 @@ export class NotFoundError extends HttpError {
     }
 }
 
+/** The global error handler.
+ * 
+ * This handler is called for:
+ * - Request schema validation errors
+ * - Exceptions thrown by the authentication module
+ * - Uncaught exceptions in controller actions
+ * 
+ * See https://tsoa-community.github.io/docs/error-handling.html#setting-up-error-handling
+ * The code that imports and calls this handler is in tsoa-support/routes.ts.tmpl.
+ */
 export function errorHandler(err: unknown, req: ccf.Request): ccf.Response<ErrorResponse | ValidateErrorResponse> {
     if (err instanceof ValidateError) {
         return {

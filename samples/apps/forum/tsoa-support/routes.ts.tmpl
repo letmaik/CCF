@@ -113,14 +113,13 @@ export function getValidatedArgs(args: any, request: any, response: any): any[] 
 }
 
 {{#if useSecurity}}
-export function authenticateMiddleware(security: TsoaRoute.Security[], request: any, response: any) {
-    let user = undefined
+export function authenticateMiddleware(security: TsoaRoute.Security[], request: any) {
     let success = false
     let error = undefined
     for (const secMethod of security) {
         for (const name in secMethod) {
             try {
-                user = authentication(request, name, secMethod[name])
+                authentication(request, name, secMethod[name])
                 success = true
                 break
             } catch (e) {
@@ -131,17 +130,8 @@ export function authenticateMiddleware(security: TsoaRoute.Security[], request: 
             break
         }
     }
-    if (success) {
-        request['user'] = user
-        return true
-    } else {
-        response.statusCode = 401
-        if (error.message) {
-            response.body = {
-                message: error.message
-            }
-        }
-        return false
+    if (!success) {
+        throw error
     }
 }
 {{/if}}
@@ -194,8 +184,10 @@ export function {{name}}(request) {
     }
 
     {{#if security.length}}
-    if (!authenticateMiddleware({{json security}}, request, response)) {
-        return response;
+    try {
+        authenticateMiddleware({{json security}}, request)
+    } catch (err) {
+        return errorHandler(err, request);
     }
     {{/if}}
 

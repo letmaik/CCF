@@ -23,6 +23,7 @@ import {
     ErrorResponse, ValidateErrorResponse, ValidateErrorStatus,
     BadRequestError, ForbiddenError, NotFoundError
 } from "../error_handler"
+import { User } from "../authentication"
 import * as ccf from "../types/ccf"
 
 export const MINIMUM_OPINION_THRESHOLD = 10
@@ -120,13 +121,13 @@ export class PollController extends Controller {
         @Body() body: CreatePollRequest,
         @Request() request: ccf.Request
     ): void {
-        const user = request.user.userId
+        const user: User = request.user
 
         if (this.kvPolls.has(topic)) {
             throw new ForbiddenError("Poll with given topic exists already")
         }
         this.kvPolls.set(topic, {
-            creator: user,
+            creator: user.userId,
             type: body.type,
             opinions: {}
         })
@@ -144,14 +145,14 @@ export class PollController extends Controller {
         @Body() body: CreatePollsRequest,
         @Request() request: ccf.Request
     ): void {
-        const user = request.user.userId
+        const user: User = request.user
 
         for (let [topic, poll] of Object.entries(body.polls)) {
             if (this.kvPolls.has(topic)) {
                 throw new ForbiddenError(`Poll with topic '${topic}' exists already`)
             }
             this.kvPolls.set(topic, {
-                creator: user,
+                creator: user.userId,
                 type: poll.type,
                 opinions: {}
             })
@@ -172,7 +173,7 @@ export class PollController extends Controller {
         @Body() body: SubmitOpinionRequest,
         @Request() request: ccf.Request
     ): void {
-        const user = request.user.userId
+        const user: User = request.user
 
         const poll = this.kvPolls.get(topic)
         if (poll === undefined) {
@@ -181,7 +182,7 @@ export class PollController extends Controller {
         if (typeof body.opinion !== poll.type) {
             throw new BadRequestError("Poll has a different opinion type")
         }      
-        poll.opinions[user] = body.opinion
+        poll.opinions[user.userId] = body.opinion
         this.kvPolls.set(topic, poll)
         this.setStatus(204)
     }
@@ -194,7 +195,7 @@ export class PollController extends Controller {
         @Body() body: SubmitOpinionsRequest,
         @Request() request: ccf.Request
     ): void {
-        const user = request.user.userId
+        const user: User = request.user
 
         for (const [topic, opinion] of Object.entries(body.opinions)) {
             const poll = this.kvPolls.get(topic)
@@ -204,7 +205,7 @@ export class PollController extends Controller {
             if (typeof opinion.opinion !== poll.type) {
                 throw new BadRequestError(`Poll with topic '${topic}' has a different opinion type`)
             }      
-            poll.opinions[user] = opinion.opinion
+            poll.opinions[user.userId] = opinion.opinion
             this.kvPolls.set(topic, poll)
         }
 
@@ -219,29 +220,28 @@ export class PollController extends Controller {
         @Path() topic: string,
         @Request() request: ccf.Request
     ): GetPollResponse {
-        const user = request.user.userId
+        const user: User = request.user
 
         if (!this.kvPolls.has(topic)){
             throw new NotFoundError("Poll does not exist")
         }
 
         this.setStatus(200)
-        return this._getPoll(user, topic)
+        return this._getPoll(user.userId, topic)
     }
     
     @SuccessResponse(200, "Poll data")
     @Response<ValidateErrorResponse>(ValidateErrorStatus, "Schema validation error")
     @Get()
     public getPolls(
-        @Header() authorization: string,
         @Request() request: ccf.Request
     ): GetPollsResponse {
-        const user = request.user.userId
+        const user: User = request.user
 
         let response: GetPollsResponse = { polls: {} }
 
         for (const topic of this._getTopics()) {
-            response.polls[topic] = this._getPoll(user, topic)
+            response.polls[topic] = this._getPoll(user.userId, topic)
         }
 
         this.setStatus(200)
