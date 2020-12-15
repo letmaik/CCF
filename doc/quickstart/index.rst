@@ -8,5 +8,4 @@
     install
     build
     create_vm
-    build_setup
     contribute

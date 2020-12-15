@@ -9,6 +9,13 @@ These endpoints can read or mutate the state of a unique :ref:`build_apps/kv/ind
 
 .. panels::
 
+    :fa:`laptop-code` :doc:`build_setup`
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    Set up a VM or a container to build a CCF application.
+
+    ---
+
     .. image:: ../img/cpp.svg
       :width: 22
       :alt: C++
@@ -83,6 +90,7 @@ These endpoints can read or mutate the state of a unique :ref:`build_apps/kv/ind
 .. toctree::
     :hidden:
 
+    build_setup
     example
     js_app
     build_app
