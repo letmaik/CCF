@@ -1,0 +1,3 @@
+[submodule "3rdparty/urlfetch/3rdparty/libcurl/curl"]
+	path = 3rdparty/urlfetch/3rdparty/libcurl/curl
+	url = https://github.com/curl/curl.git
