@@ -94,7 +94,7 @@ namespace ccf
 // Unused in all sample apps, but used by node frontend
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wunused-function"
-  static void remove_jwt_keys(kv::Tx& tx, std::string issuer)
+  static void remove_jwt_public_signing_keys(kv::Tx& tx, std::string issuer)
   {
     auto keys = tx.rw<JwtPublicSigningKeys>(Tables::JWT_PUBLIC_SIGNING_KEYS);
     auto key_issuer = tx.rw<JwtPublicSigningKeyIssuer>(Tables::JWT_PUBLIC_SIGNING_KEY_ISSUER);
@@ -259,7 +259,7 @@ namespace ccf
       return false;
     }
 
-    remove_jwt_keys(tx, issuer);
+    remove_jwt_public_signing_keys(tx, issuer);
     for (auto& [kid, der] : new_keys)
     {
       keys->put(kid, der);

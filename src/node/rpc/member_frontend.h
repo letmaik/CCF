@@ -576,7 +576,7 @@ namespace ccf
              return false;
            }
 
-           remove_jwt_keys(tx, issuer);
+           remove_jwt_public_signing_keys(tx, issuer);
 
            return true;
          }},
