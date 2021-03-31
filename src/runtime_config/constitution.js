@@ -22,17 +22,22 @@ function parseUrl(url) {
 }
 
 function checkType(value, type, field) {
-  const optional = type.endsWith('?');
+  const optional = type.endsWith("?");
   if (optional) {
     if (typeof value === null || typeof value === undefined) {
       return;
     }
     type = type.slice(0, -1);
   }
-  if ((type === "array" && !Array.isArray(value)) ||
-      (type === "integer" && !Number.isInteger(value)) ||
-      typeof value !== type
-      ) {
+  if (type === "array") {
+    if (!Array.isArray(value)) {
+      throw new Error(`${field} must be an array`);
+    }
+  } else if (type === "integer") {
+    if (!Number.isInteger(value)) {
+      throw new Error(`${field} must be an integer`);
+    }
+  } else if (typeof value !== type) {
     throw new Error(`${field} must be of type ${type} but is ${typeof value}`);
   }
 }
@@ -44,8 +49,38 @@ function checkEnum(value, members, field) {
 }
 
 function checkBounds(value, low, high, field) {
-  if (value < low || value > high) {
-    throw new Error(`${field} must be within ${low} and ${high}`);
+  if (low !== null && value < low) {
+    throw new Error(`${field} must be greater than ${low}`);
+  }
+  if (high !== null && value > high) {
+    throw new Error(`${field} must be lower than ${high}`);
+  }
+}
+
+function checkLength(value, min, max, field) {
+  if (min !== null && value.length < min) {
+    throw new Error(`${field} must be an array of minimum ${min} elements`);
+  }
+  if (max !== null && value.length > max) {
+    throw new Error(`${field} must be an array of maximum ${max} elements`);
+  }
+}
+
+function checkJwks(value, field) {
+  checkType(value, "object", field);
+  checkType(values.keys, "array", `${field}.keys`);
+  for (const [i, jwk] of value.keys.entries()) {
+    checkType(jwk.kid, "string", `${field}.keys[${i}].kid`);
+    checkType(jwk.kty, "string", `${field}.keys[${i}].kty`);
+    checkType(jwk.x5c, "array", `${field}.keys[${i}].x5c`);
+    checkLength(jwk.x5c, 1, null, `${field}.keys[${i}].x5c`);
+    for (const [j, b64der] of jwk.x5c.entries()) {
+      checkType(b64der, "string", `${field}.keys[${i}].x5c[${j}]`);
+      const pem = "-----BEGIN CERTIFICATE-----" + b64der + "-----END CERTIFICATE-----";
+      if (!ccf.isValidX509Chain(pem)) {
+        throw new Error(`${field}.keys[${i}].x5c[${j}] is not an X509 certificate`);
+      }
+    }
   }
 }
 
@@ -224,28 +259,16 @@ const actions = new Map([
         checkEnum(args.key_filter, ["all", "sgx"], "key_filter");
         checkType(args.key_policy, "object?", "key_policy");
         if (args.key_policy) {
-          checkType(args.key_policy, "object?", "key_policy.sgx_claims");
+          checkType(args.key_policy.sgx_claims, "object?", "key_policy.sgx_claims");
           if (args.key_policy.sgx_claims) {
-            for (const [name, value] of Object.entries(args.key_policy)) {
-              checkType(value, "string", `key_policy["${name}"]`);
+            for (const [name, value] of Object.entries(args.key_policy.sgx_claims)) {
+              checkType(value, "string", `key_policy.sgx_claims["${name}"]`);
             }
           }
         }
         checkType(args.jwks, "object?", "jwks");
         if (args.jwks) {
-          checkType(args.jwks.keys, "array", "jwks.keys");
-          for (const jwk of args.jwks.keys) {
-            checkType(jwk.kid, "string", "jwks.keys[].kid");
-            checkType(jwk.kty, "string", "jwks.keys[].kty");
-            checkType(jwk.x5c, "array", "jwks.keys[].x5c");
-            for (const b64der of jwk.x5c) {
-              checkType(b64der, "string", "jwks.keys[].x5c[]");
-              const pem = "-----BEGIN CERTIFICATE-----" + b64der + "-----END CERTIFICATE-----";
-              if (!ccf.isValidX509Chain(pem)) {
-                throw new Error(`jwks.keys[].x5c[] is not an X509 certificate`);
-              }
-            }
-          }
+          checkJwks(args.jwks, "jwks");
         }
         if (args.auto_refresh) {
           if (!args.ca_cert_bundle_name) {
@@ -280,6 +303,35 @@ const actions = new Map([
         delete args.jwks;
         const metadata = ccf.jsonCompatibleToBuf(args);
         ccf.kv["public:ccf.gov.jwt.issuers"].set(issuer, metadata);
+      }
+    ),
+  ],
+  [
+    "set_jwt_public_signing_keys",
+    new Action(
+      function (args) {
+        checkType(args.issuer, "string", "issuer");
+        checkJwks(args.jwks, "jwks");
+      },
+      function (args) {
+        if (!ccf.setJwtPublicSigningKeys(args)) {
+          throw new Error("setJwtPublicSigningKeys() failed");
+        }
+      }
+    ),
+  ],
+  [
+    "remove_jwt_issuer",
+    new Action(
+      function (args) {
+        checkType(args.issuer, "string", "issuer");
+      },
+      function (args) {
+        const issuer = ccf.strToBuf(args.issuer);
+        if (!ccf.kv["public:ccf.gov.jwt.issuers"].delete(issuer)) {
+          return;
+        }
+        ccf.removeJwtPublicSigningKeys(args.issuer);
       }
     ),
   ],

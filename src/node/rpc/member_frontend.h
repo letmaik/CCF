@@ -571,9 +571,7 @@ namespace ccf
 
            if (!issuers->remove(issuer))
            {
-             LOG_FAIL_FMT(
-               "Proposal {}: {} is not a valid issuer", proposal_id, issuer);
-             return false;
+             return true;
            }
 
            remove_jwt_public_signing_keys(tx, issuer);
