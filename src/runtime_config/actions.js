@@ -91,6 +91,14 @@ function checkJwks(value, field) {
   }
 }
 
+function checkX509CertChain(value, field) {
+  if (!ccf.isValidX509Chain(value)) {
+    throw new Error(
+      `${field} must be a valid X509 certificate (chain) in PEM format`
+    );
+  }
+}
+
 const actions = new Map([
   [
     "set_member_data",
@@ -250,7 +258,7 @@ const actions = new Map([
     "valid_pem",
     new Action(
       function (args) {
-        return ccf.isValidX509Chain(args.pem);
+        checkX509CertChain(args.pem, "pem");
       },
       function (args) {}
     ),
@@ -259,13 +267,17 @@ const actions = new Map([
     "set_ca_cert_bundle",
     new Action(
       function (args) {
+        checkType(args.name, "string", "name");
+        // rename function to ..CertBundle?
+        checkX509CertChain(args.cert_bundle, "cert_bundle");
+      },
+      function (args) {
         const name = args.name;
         const bundle = args.cert_bundle;
         const nameBuf = ccf.strToBuf(name);
         const bundleBuf = ccf.jsonCompatibleToBuf(bundle);
         ccf.kv["public:ccf.gov.tls.ca_cert_bundles"].set(nameBuf, bundleBuf);
-      },
-      function (args) {}
+      }
     ),
   ],
   [
