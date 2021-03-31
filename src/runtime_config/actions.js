@@ -256,6 +256,32 @@ const actions = new Map([
     ),
   ],
   [
+    "set_ca_cert_bundle",
+    new Action(
+      function (args) {
+        const name = args.name;
+        const bundle = args.cert_bundle;
+        const nameBuf = ccf.strToBuf(name);
+        const bundleBuf = ccf.jsonCompatibleToBuf(bundle);
+        ccf.kv["public:ccf.gov.tls.ca_cert_bundles"].set(nameBuf, bundleBuf);
+      },
+      function (args) {}
+    ),
+  ],
+  [
+    "remove_ca_cert_bundle",
+    new Action(
+      function (args) {
+        checkType(args, "string", "args");
+      },
+      function (args) {
+        const name = args;
+        const nameBuf = ccf.strToBuf(name);
+        ccf.kv["public:ccf.gov.tls.ca_cert_bundles"].delete(nameBuf);
+      }
+    ),
+  ],
+  [
     "set_jwt_issuer",
     new Action(
       function (args) {
