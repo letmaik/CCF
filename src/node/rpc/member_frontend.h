@@ -561,10 +561,7 @@ namespace ccf
            return success;
          }},
         {"remove_jwt_issuer",
-         [this](
-           const ProposalId& proposal_id,
-           kv::Tx& tx,
-           const nlohmann::json& args) {
+         [this](const ProposalId&, kv::Tx& tx, const nlohmann::json& args) {
            const auto parsed = args.get<RemoveJwtIssuer>();
            const auto issuer = parsed.issuer;
            auto issuers = tx.rw(this->network.jwt_issuers);
@@ -1969,11 +1966,7 @@ namespace ccf
         }
 
         if (!set_jwt_public_signing_keys(
-              ctx.tx,
-              "",
-              parsed.issuer,
-              issuer_metadata,
-              parsed.jwks))
+              ctx.tx, "", parsed.issuer, issuer_metadata, parsed.jwks))
         {
           LOG_FAIL_FMT(
             "JWT key auto-refresh: error while storing signing keys for issuer "

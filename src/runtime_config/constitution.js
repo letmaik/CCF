@@ -7,7 +7,9 @@ class Action {
 
 function parseUrl(url) {
   // From https://tools.ietf.org/html/rfc3986#appendix-B
-  const re = new RegExp("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+  const re = new RegExp(
+    "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"
+  );
   const groups = url.match(re);
   if (!groups) {
     throw new TypeError(`${url} is not a valid URL.`);
@@ -17,8 +19,8 @@ function parseUrl(url) {
     authority: groups[4],
     path: groups[5],
     query: groups[7],
-    fragment: groups[9]
-  }
+    fragment: groups[9],
+  };
 }
 
 function checkType(value, type, field) {
@@ -68,7 +70,7 @@ function checkLength(value, min, max, field) {
 
 function checkJwks(value, field) {
   checkType(value, "object", field);
-  checkType(values.keys, "array", `${field}.keys`);
+  checkType(value.keys, "array", `${field}.keys`);
   for (const [i, jwk] of value.keys.entries()) {
     checkType(jwk.kid, "string", `${field}.keys[${i}].kid`);
     checkType(jwk.kty, "string", `${field}.keys[${i}].kty`);
@@ -76,9 +78,12 @@ function checkJwks(value, field) {
     checkLength(jwk.x5c, 1, null, `${field}.keys[${i}].x5c`);
     for (const [j, b64der] of jwk.x5c.entries()) {
       checkType(b64der, "string", `${field}.keys[${i}].x5c[${j}]`);
-      const pem = "-----BEGIN CERTIFICATE-----" + b64der + "-----END CERTIFICATE-----";
+      const pem =
+        "-----BEGIN CERTIFICATE-----" + b64der + "-----END CERTIFICATE-----";
       if (!ccf.isValidX509Chain(pem)) {
-        throw new Error(`${field}.keys[${i}].x5c[${j}] is not an X509 certificate`);
+        throw new Error(
+          `${field}.keys[${i}].x5c[${j}] is not an X509 certificate`
+        );
       }
     }
   }
@@ -110,8 +115,7 @@ const actions = new Map([
   [
     "rekey_ledger",
     new Action(
-      function (args) {
-      },
+      function (args) {},
 
       function (args) {
         ccf.node.rekeyLedger();
@@ -166,8 +170,8 @@ const actions = new Map([
     "set_recovery_threshold",
     new Action(
       function (args) {
-        checkType(args.threshold, 'integer', 'threshold');
-        checkBounds(args.threshold, 1, 254, 'threshold');
+        checkType(args.threshold, "integer", "threshold");
+        checkBounds(args.threshold, 1, 254, "threshold");
       },
       function (args) {}
     ),
@@ -175,64 +179,56 @@ const actions = new Map([
   [
     "always_accept_noop",
     new Action(
-      function (args) {
-      },
+      function (args) {},
       function (args) {}
     ),
   ],
   [
     "always_reject_noop",
     new Action(
-      function (args) {
-      },
+      function (args) {},
       function (args) {}
     ),
   ],
   [
     "always_accept_with_one_vote",
     new Action(
-      function (args) {
-      },
+      function (args) {},
       function (args) {}
     ),
   ],
   [
     "always_reject_with_one_vote",
     new Action(
-      function (args) {
-      },
+      function (args) {},
       function (args) {}
     ),
   ],
   [
     "always_accept_if_voted_by_operator",
     new Action(
-      function (args) {
-      },
+      function (args) {},
       function (args) {}
     ),
   ],
   [
     "always_accept_if_proposed_by_operator",
     new Action(
-      function (args) {
-      },
+      function (args) {},
       function (args) {}
     ),
   ],
   [
     "always_accept_with_two_votes",
     new Action(
-      function (args) {
-      },
+      function (args) {},
       function (args) {}
     ),
   ],
   [
     "always_reject_with_two_votes",
     new Action(
-      function (args) {
-      },
+      function (args) {},
       function (args) {}
     ),
   ],
@@ -259,9 +255,15 @@ const actions = new Map([
         checkEnum(args.key_filter, ["all", "sgx"], "key_filter");
         checkType(args.key_policy, "object?", "key_policy");
         if (args.key_policy) {
-          checkType(args.key_policy.sgx_claims, "object?", "key_policy.sgx_claims");
+          checkType(
+            args.key_policy.sgx_claims,
+            "object?",
+            "key_policy.sgx_claims"
+          );
           if (args.key_policy.sgx_claims) {
-            for (const [name, value] of Object.entries(args.key_policy.sgx_claims)) {
+            for (const [name, value] of Object.entries(
+              args.key_policy.sgx_claims
+            )) {
               checkType(value, "string", `key_policy.sgx_claims["${name}"]`);
             }
           }
@@ -272,37 +274,52 @@ const actions = new Map([
         }
         if (args.auto_refresh) {
           if (!args.ca_cert_bundle_name) {
-            throw new Error("ca_cert_bundle_name is missing but required if auto_refresh is true");
+            throw new Error(
+              "ca_cert_bundle_name is missing but required if auto_refresh is true"
+            );
           }
-          let url
+          let url;
           try {
             url = parseUrl(args.issuer);
           } catch (e) {
             throw new Error("issuer must be a URL if auto_refresh is true");
           }
           if (url.scheme != "https") {
-            throw new Error("issuer must be a URL starting with https:// if auto_refresh is true");
+            throw new Error(
+              "issuer must be a URL starting with https:// if auto_refresh is true"
+            );
           }
           if (url.query || url.fragment) {
-            throw new Error("issuer must be a URL without query/fragment if auto_refresh is true");
+            throw new Error(
+              "issuer must be a URL without query/fragment if auto_refresh is true"
+            );
           }
         }
       },
       function (args) {
         if (args.auto_refresh) {
-          const ca_cert_bundle_name = ccf.strToBuf(args.ca_cert_bundle_name);
-          if (!ccf.kv["public:ccf.gov.tls.ca_cert_bundles"].has(ca_cert_bundle_name)) {
-            throw new Error(`No CA cert bundle found with name '${args.ca_cert_bundle_name}'`);
+          const caCertBundleName = args.ca_cert_bundle_name;
+          const caCertBundleNameBuf = ccf.strToBuf(args.ca_cert_bundle_name);
+          if (
+            !ccf.kv["public:ccf.gov.tls.ca_cert_bundles"].has(
+              caCertBundleNameBuf
+            )
+          ) {
+            throw new Error(
+              `No CA cert bundle found with name '${caCertBundleName}'`
+            );
           }
         }
-        if (!ccf.setJwtPublicSigningKeys(args)) {
-          throw new Error("setJwtPublicSigningKeys() failed");
-        }
-
-        const issuer = ccf.strToBuf(args.issuer);
+        const issuer = args.issuer;
+        const jwks = args.jwks;
         delete args.jwks;
-        const metadata = ccf.jsonCompatibleToBuf(args);
-        ccf.kv["public:ccf.gov.jwt.issuers"].set(issuer, metadata);
+        const metadata = args;
+        if (jwks) {
+          ccf.setJwtPublicSigningKeys(issuer, metadata, jwks);
+        }
+        const issuerBuf = ccf.strToBuf(issuer);
+        const metadataBuf = ccf.jsonCompatibleToBuf(metadata);
+        ccf.kv["public:ccf.gov.jwt.issuers"].set(issuerBuf, metadataBuf);
       }
     ),
   ],
@@ -314,9 +331,15 @@ const actions = new Map([
         checkJwks(args.jwks, "jwks");
       },
       function (args) {
-        if (!ccf.setJwtPublicSigningKeys(args)) {
-          throw new Error("setJwtPublicSigningKeys() failed");
+        const issuer = args.issuer;
+        const issuerBuf = ccf.strToBuf(issuer);
+        const metadataBuf = ccf.kv["public:ccf.gov.jwt.issuers"].get(issuerBuf);
+        if (metadataBuf === undefined) {
+          throw new Error(`issuer ${issuer} not found`);
         }
+        const metadata = ccf.bufToJsonCompatible(metadataBuf);
+        const jwks = args.jwks;
+        ccf.setJwtPublicSigningKeys(issuer, metadata, jwks);
       }
     ),
   ],
@@ -327,8 +350,8 @@ const actions = new Map([
         checkType(args.issuer, "string", "issuer");
       },
       function (args) {
-        const issuer = ccf.strToBuf(args.issuer);
-        if (!ccf.kv["public:ccf.gov.jwt.issuers"].delete(issuer)) {
+        const issuerBuf = ccf.strToBuf(args.issuer);
+        if (!ccf.kv["public:ccf.gov.jwt.issuers"].delete(issuerBuf)) {
           return;
         }
         ccf.removeJwtPublicSigningKeys(args.issuer);
@@ -347,7 +370,9 @@ export function validate(input) {
       try {
         definition.validate(action.args);
       } catch (e) {
-        errors.push(`${action.name} at position ${position} failed validation: ${e}`);
+        errors.push(
+          `${action.name} at position ${position} failed validation: ${e}`
+        );
       }
     } else {
       errors.push(`${action.name}: no such action`);

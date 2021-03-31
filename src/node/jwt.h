@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the Apache 2.0 License.
 #pragma once
-#include "ds/json.h"
 #include "crypto/verifier.h"
+#include "ds/json.h"
 #include "entities.h"
-#include "service_map.h"
 #include "proposals.h"
+#include "service_map.h"
 
 #include <openenclave/attestation/verifier.h>
 #include <optional>
@@ -92,12 +92,13 @@ namespace ccf
   DECLARE_JSON_REQUIRED_FIELDS(JsonWebKeySet, keys)
 
 // Unused in all sample apps, but used by node frontend
-#  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wunused-function"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
   static void remove_jwt_public_signing_keys(kv::Tx& tx, std::string issuer)
   {
     auto keys = tx.rw<JwtPublicSigningKeys>(Tables::JWT_PUBLIC_SIGNING_KEYS);
-    auto key_issuer = tx.rw<JwtPublicSigningKeyIssuer>(Tables::JWT_PUBLIC_SIGNING_KEY_ISSUER);
+    auto key_issuer =
+      tx.rw<JwtPublicSigningKeyIssuer>(Tables::JWT_PUBLIC_SIGNING_KEY_ISSUER);
 
     key_issuer->foreach(
       [&issuer, &keys, &key_issuer](const auto& k, const auto& v) {
@@ -132,7 +133,8 @@ namespace ccf
     const JsonWebKeySet& jwks)
   {
     auto keys = tx.rw<JwtPublicSigningKeys>(Tables::JWT_PUBLIC_SIGNING_KEYS);
-    auto key_issuer = tx.rw<JwtPublicSigningKeyIssuer>(Tables::JWT_PUBLIC_SIGNING_KEY_ISSUER);
+    auto key_issuer =
+      tx.rw<JwtPublicSigningKeyIssuer>(Tables::JWT_PUBLIC_SIGNING_KEY_ISSUER);
 
     auto log_prefix = proposal_id.empty() ?
       "JWT key auto-refresh" :
@@ -178,8 +180,7 @@ namespace ccf
       }
 
       std::map<std::string, std::vector<uint8_t>> claims;
-      bool has_key_policy_sgx_claims =
-        issuer_metadata.key_policy.has_value() &&
+      bool has_key_policy_sgx_claims = issuer_metadata.key_policy.has_value() &&
         issuer_metadata.key_policy.value().sgx_claims.has_value() &&
         !issuer_metadata.key_policy.value().sgx_claims.value().empty();
       if (
@@ -195,8 +196,7 @@ namespace ccf
       }
 
       if (
-        issuer_metadata.key_filter == JwtIssuerKeyFilter::SGX &&
-        claims.empty())
+        issuer_metadata.key_filter == JwtIssuerKeyFilter::SGX && claims.empty())
       {
         LOG_INFO_FMT(
           "{}: Skipping JWT signing key with kid {} (not OE "
@@ -209,7 +209,7 @@ namespace ccf
       if (has_key_policy_sgx_claims)
       {
         for (auto& [claim_name, expected_claim_val_hex] :
-              issuer_metadata.key_policy.value().sgx_claims.value())
+             issuer_metadata.key_policy.value().sgx_claims.value())
         {
           if (claims.find(claim_name) == claims.end())
           {
@@ -268,5 +268,5 @@ namespace ccf
 
     return true;
   }
-#  pragma clang diagnostic pop
+#pragma clang diagnostic pop
 }
