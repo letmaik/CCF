@@ -26,7 +26,7 @@ function parseUrl(url) {
 function checkType(value, type, field) {
   const optional = type.endsWith("?");
   if (optional) {
-    if (typeof value === null || typeof value === undefined) {
+    if (value === null || value === undefined) {
       return;
     }
     type = type.slice(0, -1);
@@ -45,7 +45,7 @@ function checkType(value, type, field) {
 }
 
 function checkEnum(value, members, field) {
-  if (!members.contains(value)) {
+  if (!members.includes(value)) {
     throw new Error(`${field} must be one of ${members}`);
   }
 }
@@ -79,7 +79,9 @@ function checkJwks(value, field) {
     for (const [j, b64der] of jwk.x5c.entries()) {
       checkType(b64der, "string", `${field}.keys[${i}].x5c[${j}]`);
       const pem =
-        "-----BEGIN CERTIFICATE-----" + b64der + "-----END CERTIFICATE-----";
+        "-----BEGIN CERTIFICATE-----\n" +
+        b64der +
+        "\n-----END CERTIFICATE-----";
       if (!ccf.isValidX509Chain(pem)) {
         throw new Error(
           `${field}.keys[${i}].x5c[${j}] is not an X509 certificate`
@@ -146,7 +148,6 @@ const actions = new Map([
         let raw_user_id = ccf.strToBuf(user_id);
 
         if (ccf.kv["ccf.gov.users.certs"].has(raw_user_id)) {
-          console.log(`User cert for ${user_id} already exists`);
           return; // Idempotent
         }
 
