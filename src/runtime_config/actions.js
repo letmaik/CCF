@@ -247,14 +247,12 @@ const actions = new Map([
     ),
   ],
   [
-    "always_throw_in_apply",
+    "valid_pem",
     new Action(
       function (args) {
-        return true;
+        return ccf.isValidX509Chain(args.pem);
       },
-      function (args) {
-        throw new Error("Error message");
-      }
+      function (args) {}
     ),
   ],
   [

@@ -961,15 +961,7 @@ namespace ccf
         JS_FreeValue(js_context, prop_id);
         JS_FreeValue(js_context, vs);
 
-        std::optional<std::string> failure_reason = std::nullopt;
-
-        if (JS_IsException(val))
-        {
-          pi_.value().state = ProposalState::FAILED;
-          failure_reason = fmt::format(
-            "Failed to resolve(): {}", js::js_error_message(js_context));
-        }
-        else if (JS_IsString(val))
+        if (JS_IsString(val))
         {
           auto s = JS_ToCString(js_context, val);
           std::string status(s);
@@ -997,14 +989,7 @@ namespace ccf
           else
           {
             pi_.value().state = ProposalState::FAILED;
-            failure_reason = fmt::format(
-              "resolve() returned invalid status value: \"{}\"", status);
           }
-        }
-        else
-        {
-          pi_.value().state = ProposalState::FAILED;
-          failure_reason = "resolve() returned invalid status value";
         }
 
         if (pi_.value().state != ProposalState::OPEN)
@@ -1034,9 +1019,8 @@ namespace ccf
             JS_FreeValue(js_context, prop);
             if (JS_IsException(val))
             {
+              js::js_dump_error(js_context);
               pi_.value().state = ProposalState::FAILED;
-              failure_reason = fmt::format(
-                "Failed to apply(): {}", js::js_error_message(js_context));
             }
           }
         }
@@ -1044,8 +1028,7 @@ namespace ccf
         return jsgov::ProposalInfoSummary{proposal_id,
                                           pi_->proposer_id,
                                           pi_.value().state,
-                                          pi_.value().ballots.size(),
-                                          failure_reason};
+                                          pi_.value().ballots.size()};
       }
     }
 
@@ -1983,7 +1966,7 @@ namespace ccf
         }
 
         if (!set_jwt_public_signing_keys(
-              ctx.tx, "", parsed.issuer, issuer_metadata, parsed.jwks))
+              ctx.tx, "<auto-refresh>", parsed.issuer, issuer_metadata, parsed.jwks))
         {
           LOG_FAIL_FMT(
             "JWT key auto-refresh: error while storing signing keys for issuer "
@@ -2470,7 +2453,6 @@ namespace ccf
         auto rv = resolve_proposal(
           ctx.tx, proposal_id, p.value(), constitution.value());
         pi_.value().state = rv.state;
-        pi_.value().failure_reason = rv.failure_reason;
         pi->put(proposal_id, pi_.value());
         return make_success(rv);
       };
