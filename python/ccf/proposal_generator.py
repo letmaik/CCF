@@ -181,6 +181,10 @@ def build_proposal(
         vote_lines.append("  return true")
         vote_lines.append("}")
         vote_text = "\n".join(vote_lines)
+
+        # temporary
+        vote_text = "export function vote (raw_proposal, proposer_id) { return true; }"
+
         vote = {"ballot": vote_text}
 
     else:

@@ -1966,7 +1966,11 @@ namespace ccf
         }
 
         if (!set_jwt_public_signing_keys(
-              ctx.tx, "<auto-refresh>", parsed.issuer, issuer_metadata, parsed.jwks))
+              ctx.tx,
+              "<auto-refresh>",
+              parsed.issuer,
+              issuer_metadata,
+              parsed.jwks))
         {
           LOG_FAIL_FMT(
             "JWT key auto-refresh: error while storing signing keys for issuer "
