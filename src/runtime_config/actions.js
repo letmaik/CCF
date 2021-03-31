@@ -247,6 +247,17 @@ const actions = new Map([
     ),
   ],
   [
+    "always_throw_in_apply",
+    new Action(
+      function (args) {
+        return true;
+      },
+      function (args) {
+        throw new Error("Error message");
+      }
+    ),
+  ],
+  [
     "set_jwt_issuer",
     new Action(
       function (args) {
