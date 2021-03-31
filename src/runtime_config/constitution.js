@@ -241,7 +241,7 @@ const actions = new Map([
             for (const b64der of jwk.x5c) {
               checkType(b64der, "string", "jwks.keys[].x5c[]");
               const pem = "-----BEGIN CERTIFICATE-----" + b64der + "-----END CERTIFICATE-----";
-              if (!ccf.isValidX509Cert(pem)) {
+              if (!ccf.isValidX509Chain(pem)) {
                 throw new Error(`jwks.keys[].x5c[] is not an X509 certificate`);
               }
             }
