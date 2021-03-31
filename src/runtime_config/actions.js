@@ -82,11 +82,7 @@ function checkJwks(value, field) {
         "-----BEGIN CERTIFICATE-----\n" +
         b64der +
         "\n-----END CERTIFICATE-----";
-      if (!ccf.isValidX509Chain(pem)) {
-        throw new Error(
-          `${field}.keys[${i}].x5c[${j}] is not an X509 certificate`
-        );
-      }
+      checkX509CertChain(pem, `${field}.keys[${i}].x5c[${j}]`);
     }
   }
 }

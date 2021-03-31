@@ -53,7 +53,6 @@ namespace js
 
   JSValue js_print(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv);
   void js_dump_error(JSContext* ctx);
-  std::string js_error_message(JSContext* ctx);
 
   JSValue js_body_text(
     JSContext* ctx,
