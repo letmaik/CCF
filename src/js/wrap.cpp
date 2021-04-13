@@ -6,6 +6,7 @@
 #include "ds/logger.h"
 #include "js/conv.cpp"
 #include "js/crypto.cpp"
+#include "js/oe.cpp"
 #include "kv/untyped_map.h"
 #include "node/jwt.h"
 #include "node/rpc/call_types.h"
@@ -925,6 +926,12 @@ namespace js
       JS_NewCFunction(ctx, js_is_valid_pem, "isValidX509Chain", 1));
     JS_SetPropertyStr(
       ctx, ccf, "pemToId", JS_NewCFunction(ctx, js_pem_to_id, "pemToId", 1));
+    JS_SetPropertyStr(
+      ctx,
+      ccf,
+      "verifyOpenEnclaveEvidence",
+      JS_NewCFunction(
+        ctx, js_verify_open_enclave_evidence, "verifyOpenEnclaveEvidence", 3));
 
     if (txctx != nullptr)
     {

@@ -29,6 +29,8 @@ import {
   CryptoKeyPair,
   WrapAlgoParams,
   DigestAlgorithm,
+  EvidenceClaims,
+  HistoricalState,
 } from "./global.js";
 
 // JavaScript's Map uses reference equality for non-primitive types,
@@ -161,6 +163,14 @@ class CCFPolyfill implements CCF {
     } else {
       throw new Error("unsupported algorithm");
     }
+  }
+  
+  verifyOpenEnclaveEvidence(
+    format: string | undefined,
+    evidence: ArrayBuffer,
+    endorsements?: ArrayBuffer
+  ): EvidenceClaims {
+    throw new Error("Method not implemented.");
   }
 }
 
