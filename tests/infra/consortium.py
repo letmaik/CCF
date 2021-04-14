@@ -13,6 +13,7 @@ import infra.checker
 import infra.node
 import infra.crypto
 import infra.member
+from ccf.ledger import NodeStatus
 import ccf.proposal_generator
 import ccf.ledger
 from infra.proposal import ProposalState
@@ -265,9 +266,21 @@ class Consortium:
         if proposal.state == ProposalState.ACCEPTED:
             proposal.set_completed(seqno, view)
         else:
+            LOG.error(
+                json.dumps(
+                    self.get_proposal(remote_node, proposal.proposal_id), indent=2
+                )
+            )
             raise infra.proposal.ProposalNotAccepted(proposal)
 
         return proposal
+
+    def get_proposal(self, remote_node, proposal_id):
+        member = self.get_any_active_member()
+        with remote_node.client(*member.auth()) as c:
+            r = c.get(f"/gov/proposals.js/{proposal_id}")
+            assert r.status_code == http.HTTPStatus.OK.value
+            return r.body.json()
 
     def retire_node(self, remote_node, node_to_retire):
         LOG.info(f"Retiring node {node_to_retire.local_node_id}")
@@ -284,12 +297,10 @@ class Consortium:
 
         with remote_node.client() as c:
             r = c.get(f"/node/network/nodes/{node_to_retire.node_id}")
-            assert r.body.json()["status"] == infra.node.NodeStatus.RETIRED.value
+            assert r.body.json()["status"] == NodeStatus.RETIRED.value
 
     def trust_node(self, remote_node, node_id, timeout=3):
-        if not self._check_node_exists(
-            remote_node, node_id, infra.node.NodeStatus.PENDING
-        ):
+        if not self._check_node_exists(remote_node, node_id, NodeStatus.PENDING):
             raise ValueError(f"Node {node_id} does not exist in state PENDING")
 
         if os.getenv("JS_GOVERNANCE"):
@@ -307,9 +318,7 @@ class Consortium:
             timeout=timeout,
         )
 
-        if not self._check_node_exists(
-            remote_node, node_id, infra.node.NodeStatus.TRUSTED
-        ):
+        if not self._check_node_exists(remote_node, node_id, NodeStatus.TRUSTED):
             raise ValueError(f"Node {node_id} does not exist in state TRUSTED")
 
     def remove_member(self, remote_node, member_to_remove):
@@ -371,6 +380,13 @@ class Consortium:
         )
         proposal = self.get_any_active_member().propose(remote_node, proposal)
         self.vote_using_majority(remote_node, proposal, careful_vote)
+
+    def set_constitution(self, remote_node, constitution_paths):
+        proposal_body, careful_vote = self.make_proposal(
+            "set_constitution", constitution_paths
+        )
+        proposal = self.get_any_active_member().propose(remote_node, proposal_body)
+        return self.vote_using_majority(remote_node, proposal, careful_vote)
 
     def set_js_app(self, remote_node, app_bundle_path):
         proposal_body, careful_vote = self.make_proposal("set_js_app", app_bundle_path)
@@ -547,5 +563,5 @@ class Consortium:
     def wait_for_all_nodes_to_be_trusted(self, remote_node, nodes, timeout=3):
         for n in nodes:
             self.wait_for_node_to_exist_in_store(
-                remote_node, n.node_id, timeout, infra.node.NodeStatus.TRUSTED
+                remote_node, n.node_id, timeout, NodeStatus.TRUSTED
             )

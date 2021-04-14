@@ -333,6 +333,7 @@ namespace ccfapp
       js::populate_global_console(ctx);
       js::populate_global_ccf(
         &txctx,
+        args.rpc_ctx.get(),
         transaction_id,
         receipt,
         // TODO temporary (?)
