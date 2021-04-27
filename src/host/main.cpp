@@ -169,6 +169,15 @@ int main(int argc, char** argv)
       "Number of transactions between snapshots")
     ->capture_default_str();
 
+  size_t max_open_sessions = 1'000;
+  app
+    .add_option(
+      "--max-open-sessions",
+      max_open_sessions,
+      "Number of TLS sessions which may be open at the same time. Additional "
+      "connections past this limit will be refused")
+    ->capture_default_str();
+
   logger::Level host_log_level{logger::Level::INFO};
   std::vector<std::pair<std::string, logger::Level>> level_map;
   for (int i = logger::MOST_VERBOSE; i < logger::MAX_LOG_LEVEL; i++)
@@ -353,17 +362,6 @@ int main(int argc, char** argv)
       "Destination path to freshly created network certificate")
     ->capture_default_str()
     ->check(CLI::NonexistentPath);
-
-  std::string gov_script = "gov.lua";
-  start
-    ->add_option(
-      "--gov-script",
-      gov_script,
-      "Path to Lua file that defines the contents of the "
-      "public:ccf.gov.scripts table")
-    ->capture_default_str()
-    ->check(CLI::ExistingFile)
-    ->required();
 
   std::vector<std::string> constitution_paths;
   start
@@ -588,6 +586,9 @@ int main(int argc, char** argv)
   // reconstruct oversized messages sent to the host
   oversized::FragmentReconstructor fr(bp.get_dispatcher());
 
+  asynchost::ProcessLauncher process_launcher;
+  process_launcher.register_message_handlers(bp.get_dispatcher());
+
   {
     // provide regular ticks to the enclave
     const std::chrono::milliseconds tick_period(tick_period_ms);
@@ -621,9 +622,6 @@ int main(int argc, char** argv)
 
     asynchost::SnapshotManager snapshots(snapshot_dir, ledger);
     snapshots.register_message_handlers(bp.get_dispatcher());
-
-    asynchost::ProcessLauncher process_launcher;
-    process_launcher.register_message_handlers(bp.get_dispatcher());
 
     // Begin listening for node-to-node and RPC messages.
     // This includes DNS resolution and potentially dynamic port assignment (if
@@ -691,6 +689,7 @@ int main(int argc, char** argv)
                                     public_rpc_address.port};
     ccf_config.domain = domain;
     ccf_config.snapshot_tx_interval = snapshot_tx_interval;
+    ccf_config.max_open_sessions = max_open_sessions;
 
     ccf_config.subject_name = subject_name;
     ccf_config.subject_alternative_names = subject_alternative_names;
@@ -723,7 +722,6 @@ int main(int argc, char** argv)
         ccf_config.genesis.members_info.emplace_back(
           files::slurp(m_info.cert_file), public_encryption_key_file, md);
       }
-      ccf_config.genesis.gov_script = files::slurp_string(gov_script);
       ccf_config.genesis.constitution = "";
       for (const auto& constitution_path : constitution_paths)
       {
@@ -864,6 +862,8 @@ int main(int argc, char** argv)
       t.join();
     }
   }
+
+  process_launcher.stop();
 
   // Continue running the loop long enough for the on_close
   // callbacks to be despatched, so as to avoid memory being

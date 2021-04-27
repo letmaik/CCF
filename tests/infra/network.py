@@ -87,7 +87,6 @@ class Network:
         "consensus",
         "memory_reserve_startup",
         "log_format_json",
-        "gov_script",
         "constitution",
         "join_timer",
         "worker_threads",
@@ -95,6 +94,7 @@ class Network:
         "domain",
         "san",
         "snapshot_tx_interval",
+        "max_open_sessions",
         "jwt_key_refresh_interval_s",
         "common_read_only_ledger_dir",
     ]
@@ -327,7 +327,7 @@ class Network:
         )
         return primary
 
-    def _setup_common_folder(self, gov_script, constitution):
+    def _setup_common_folder(self, constitution):
         LOG.info(f"Creating common folder: {self.common_dir}")
         cmd = ["rm", "-rf", self.common_dir]
         assert (
@@ -337,10 +337,6 @@ class Network:
         assert (
             infra.proc.ccall(*cmd).returncode == 0
         ), f"Could not create {self.common_dir} directory"
-        cmd = ["cp", gov_script, self.common_dir]
-        assert (
-            infra.proc.ccall(*cmd).returncode == 0
-        ), f"Could not copy governance {gov_script} to {self.common_dir}"
         for fragment in constitution:
             cmd = ["cp", fragment, self.common_dir]
             assert (
@@ -361,14 +357,10 @@ class Network:
         self.common_dir = get_common_folder_name(args.workspace, args.label)
 
         assert (
-            args.gov_script is not None
-        ), "--gov-script argument must be provided to start a network"
-
-        assert (
             args.constitution
         ), "--constitution argument must be provided to start a network"
 
-        self._setup_common_folder(args.gov_script, args.constitution)
+        self._setup_common_folder(args.constitution)
 
         mc = max(1, args.initial_member_count)
         initial_members_info = []
