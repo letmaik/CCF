@@ -919,6 +919,28 @@ namespace js
     JS_FreeValue(ctx, global_obj);
   }
 
+  static JSValue create_openenclave_obj(JSContext* ctx)
+  {
+    auto openenclave = JS_NewObject(ctx);
+
+    JS_SetPropertyStr(
+      ctx,
+      openenclave,
+      "verifyOpenEnclaveEvidence",
+      JS_NewCFunction(
+        ctx, js_verify_open_enclave_evidence, "verifyOpenEnclaveEvidence", 3));
+
+    return openenclave;
+  }
+
+  void populate_global_openenclave(JSContext* ctx)
+  {
+    auto global_obj = JS_GetGlobalObject(ctx);
+    JS_SetPropertyStr(
+      ctx, global_obj, "openenclave", create_openenclave_obj(ctx));
+    JS_FreeValue(ctx, global_obj);
+  }
+
   JSValue create_ccf_obj(
     TxContext* txctx,
     enclave::RpcContext* rpc_ctx,
@@ -968,12 +990,6 @@ namespace js
         ctx, js_is_valid_x509_cert_bundle, "isValidX509CertBundle", 1));
     JS_SetPropertyStr(
       ctx, ccf, "pemToId", JS_NewCFunction(ctx, js_pem_to_id, "pemToId", 1));
-    JS_SetPropertyStr(
-      ctx,
-      ccf,
-      "verifyOpenEnclaveEvidence",
-      JS_NewCFunction(
-        ctx, js_verify_open_enclave_evidence, "verifyOpenEnclaveEvidence", 3));
 
     if (txctx != nullptr)
     {

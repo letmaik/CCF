@@ -30,7 +30,7 @@ import {
   WrapAlgoParams,
   DigestAlgorithm,
   EvidenceClaims,
-  HistoricalState,
+  OpenEnclave,
 } from "./global.js";
 
 // JavaScript's Map uses reference equality for non-primitive types,
@@ -198,6 +198,18 @@ class CCFPolyfill implements CCF {
 }
 
 (<any>globalThis).ccf = new CCFPolyfill();
+
+class OpenEnclavePolyfill implements OpenEnclave {
+  verifyOpenEnclaveEvidence(
+    format: string | undefined,
+    evidence: ArrayBuffer,
+    endorsements?: ArrayBuffer
+  ): EvidenceClaims {
+    throw new Error("Method not implemented.");
+  }
+}
+
+(<any>globalThis).openenclave = new OpenEnclavePolyfill();
 
 function nodeBufToArrBuf(buf: Buffer): ArrayBuffer {
   // Note: buf.buffer is not safe, see docs.
