@@ -41,9 +41,11 @@ export interface KvMap {
   get(key: ArrayBuffer): ArrayBuffer | undefined;
   set(key: ArrayBuffer, value: ArrayBuffer): KvMap;
   delete(key: ArrayBuffer): boolean;
+  clear(): void;
   forEach(
     callback: (value: ArrayBuffer, key: ArrayBuffer, kvmap: KvMap) => void
   ): void;
+  size: number;
 }
 
 /**
@@ -242,6 +244,12 @@ export interface CCF {
    * Validation is only syntactical, properties like validity dates are not evaluated.
    */
   isValidX509CertBundle(pem: string): boolean;
+
+  /**
+   * Returns whether a certificate chain is valid given a set of trusted certificates.
+   * The chain and trusted certificates are PEM-encoded bundles of X.509 certificates.
+   */
+  isValidX509CertChain(chain: string, trusted: string): boolean;
 
   rpc: {
     /**
