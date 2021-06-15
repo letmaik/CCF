@@ -285,6 +285,7 @@ namespace ccfapp
       {
         auto module_val =
           js::load_app_module(ctx, props.js_module.c_str(), &endpoint_ctx.tx);
+        LOG_TRACE_FMT("Evaluating module '{}' and its imports", props.js_module);
         export_func =
           ctx.function(module_val, props.js_function, props.js_module);
       }
@@ -301,10 +302,12 @@ namespace ccfapp
       auto request = create_request_obj(endpoint_ctx, ctx);
       int argc = 1;
       JSValueConst* argv = (JSValueConst*)&request;
-      LOG_TRACE_FMT("Calling function '{}' of module '{}'", props.js_function, props.js_module);
+      LOG_TRACE_FMT("Calling function '{}' in module '{}'", props.js_function, props.js_module);
       auto val = ctx(JS_Call(ctx, export_func, JS_UNDEFINED, argc, argv));
       JS_FreeValue(ctx, request);
       JS_FreeValue(ctx, export_func);
+
+      LOG_TRACE_FMT("Processing return value of function '{}' in module '{}'", props.js_function, props.js_module);
 
       if (JS_IsException(val))
       {
