@@ -513,17 +513,22 @@ const actions = new Map([
             }
           }
         }
+
+        checkType(
+          args.disable_bytecode_cache,
+          "boolean?",
+          "disable_bytecode_cache"
+        );
       },
       function (args) {
         const modulesMap = ccf.kv["public:ccf.gov.modules"];
+        const modulesQuickJsBytecodeMap =
+          ccf.kv["public:ccf.gov.modules_quickjs_bytecode"];
+        const modulesQuickJsVersionVal =
+          ccf.kv["public:ccf.gov.modules_quickjs_version"];
         const endpointsMap = ccf.kv["public:ccf.gov.endpoints"];
-        // kv should expose .clear()
-        modulesMap.forEach((_, k) => {
-          modulesMap.delete(k);
-        });
-        endpointsMap.forEach((_, k) => {
-          endpointsMap.delete(k);
-        });
+        modulesMap.clear();
+        endpointsMap.clear();
 
         const bundle = args.bundle;
         for (const module of bundle.modules) {
@@ -531,6 +536,13 @@ const actions = new Map([
           const pathBuf = ccf.strToBuf(path);
           const moduleBuf = ccf.strToBuf(module.module);
           modulesMap.set(pathBuf, moduleBuf);
+        }
+
+        if (args.disable_bytecode_cache) {
+          modulesQuickJsBytecodeMap.clear();
+          modulesQuickJsVersionVal.clear();
+        } else {
+          ccf.refreshAppBytecodeCache();
         }
 
         for (const [url, endpoint] of Object.entries(
@@ -554,14 +566,24 @@ const actions = new Map([
       function (args) {},
       function (args) {
         const modulesMap = ccf.kv["public:ccf.gov.modules"];
+        const modulesQuickJsBytecodeMap =
+          ccf.kv["public:ccf.gov.modules_quickjs_bytecode"];
+        const modulesQuickJsVersionVal =
+          ccf.kv["public:ccf.gov.modules_quickjs_version"];
         const endpointsMap = ccf.kv["public:ccf.gov.endpoints"];
-        // kv should expose .clear()
-        modulesMap.forEach((_, k) => {
-          modulesMap.delete(k);
-        });
-        endpointsMap.forEach((_, k) => {
-          endpointsMap.delete(k);
-        });
+        modulesMap.clear();
+        modulesQuickJsBytecodeMap.clear();
+        modulesQuickJsVersionVal.clear();
+        endpointsMap.clear();
+      }
+    ),
+  ],
+  [
+    "refresh_js_app_bytecode_cache",
+    new Action(
+      function (args) {},
+      function (args) {
+        ccf.refreshAppBytecodeCache();
       }
     ),
   ],
