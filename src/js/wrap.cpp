@@ -916,6 +916,7 @@ namespace js
       throw std::runtime_error(fmt::format("Failed to compile {}", path));
     }
 
+    LOG_TRACE_FMT("Evaluating module '{}' and its imports", path);
     auto eval_val = JS_EvalFunction(ctx, module);
     if (JS_IsException(eval_val))
     {
