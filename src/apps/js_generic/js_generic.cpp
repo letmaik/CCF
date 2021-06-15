@@ -301,6 +301,7 @@ namespace ccfapp
       auto request = create_request_obj(endpoint_ctx, ctx);
       int argc = 1;
       JSValueConst* argv = (JSValueConst*)&request;
+      LOG_TRACE_FMT("Calling function '{}' of module '{}'", props.js_function, props.js_module);
       auto val = ctx(JS_Call(ctx, export_func, JS_UNDEFINED, argc, argv));
       JS_FreeValue(ctx, request);
       JS_FreeValue(ctx, export_func);
